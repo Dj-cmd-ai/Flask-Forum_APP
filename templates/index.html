@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2 class="mb-4 text-secondary">Discussion Board</h2>
+    {% for topic in topics.items %}
+    <div class="card mb-3 shadow-sm border-0">
+        <div class="card-body">
+            <div class="media">
+                <img class="rounded-circle mr-3" style="width: 50px; height: 50px; object-fit: cover;" src="{{ url_for('static', filename='profile_pics/' + topic.author.image_file) }}">
+                <div class="media-body">
+                    <h3 class="h5">
+                    <a href="{{ url_for('view_topic', topic_id=topic.id) }}">{{ topic.title }}</a>
+    
+                    <a href="{{ url_for('home', category=topic.category) }}">
+                    <span class="badge badge-pill 
+                    {% if topic.category == 'General' %}badge-secondary
+                    {% elif topic.category == 'Brainwave' %}badge-success
+                    {% elif topic.category == 'Help' %}badge-danger
+                    {% else %}badge-info
+                    {% endif %} ml-2 align-middle">
+                    {{ topic.category }}
+                    </span>
+                    </a>
+                    </h3>
+                    <p class="text-muted small">
+                        By <a href="{{ url_for('user_posts', username=topic.author.username) }}"><strong>{{ topic.author.username }}</strong></a> 
+                        on {{ topic.date_posted.strftime('%B %d, %Y') }}
+                    </p>
+                    <p>{{ topic.content | truncate(100) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="mt-4">
+        {% for page_num in topics.iter_pages() %}
+            {% if page_num %}
+                <a class="btn btn-{{ 'primary' if topics.page == page_num else 'outline-primary' }} sm" 
+                href="{{ url_for('home', page=page_num, search=search_term, category=category_filter) }}">
+                {{ page_num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}
