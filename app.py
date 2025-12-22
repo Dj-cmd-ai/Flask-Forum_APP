@@ -8,13 +8,26 @@ from flask_login import UserMixin, LoginManager, login_user, current_user, logou
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from wtforms import SelectField # Add this to your imports
+
+
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dev-key-123'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+
+# --- CONFIGURATION UPDATES ---
+# Secret key should be pulled from environment variables for security
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-key-123'
+
+# Neon Postgres Connection logic
+# Pull DATABASE_URL from environment (Render/Vercel) or fallback to your string
+uri = os.environ.get('DATABASE_URL') or 'postgresql://neondb_owner:npg_i2z4uxotQMjy@ep-icy-dust-ahxdrg11-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+
+# SQLAlchemy requires 'postgresql://' prefix; Neon might provide 'postgres://'
+if uri and uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -46,10 +59,7 @@ class Post(db.Model):
     title = db.Column(db.String(100), nullable=True)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
-    # --- ADD THIS LINE ---
     category = db.Column(db.String(20), nullable=False, default='General')
-    
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)
 
@@ -69,14 +79,10 @@ class LoginForm(FlaskForm):
 
 class TopicForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
-    # --- ADD THE CATEGORY SELECTOR ---
-    category = SelectField('Category', choices=[
-        ('General', 'General'), 
-        ('Brainwave', 'Brainwave'), 
-        ('Help', 'Help')
-    ])
+    category = SelectField('Category', choices=[('General', 'General'), ('Brainwave', 'Brainwave'), ('Help', 'Help')])
     content = TextAreaField('Content', validators=[DataRequired()])
     submit = SubmitField('Post Topic')
+
 class ReplyForm(FlaskForm):
     content = TextAreaField('Reply', validators=[DataRequired()])
     submit = SubmitField('Post Reply')
@@ -102,16 +108,13 @@ def save_picture(form_picture):
 def home():
     page = request.args.get('page', 1, type=int)
     search_term = request.args.get('search')
-    # ADD THIS: Get category from URL
     category_filter = request.args.get('category')
     
     query = Post.query.filter_by(parent_id=None)
     
-    # Apply search filter if it exists
     if search_term:
         query = query.filter((Post.title.ilike(f'%{search_term}%')) | (Post.content.ilike(f'%{search_term}%')))
     
-    # ADD THIS: Apply category filter if it exists
     if category_filter:
         query = query.filter_by(category=category_filter)
         
@@ -173,7 +176,6 @@ def account():
 def new_topic():
     form = TopicForm()
     if form.validate_on_submit():
-        # Add category=form.category.data to the Post object
         post = Post(title=form.title.data, 
                     content=form.content.data, 
                     author=current_user,
@@ -208,6 +210,7 @@ def delete_post(post_id):
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
+    # Initializing database tables on first run
     with app.app_context():
         db.create_all()
     app.run(debug=True)
