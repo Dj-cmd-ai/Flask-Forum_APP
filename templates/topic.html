@@ -1,48 +1,77 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="card mb-4 border-0 shadow-sm">
-        <div class="card-body">
-            <img class="rounded-circle mr-2 shadow-sm" style="width: 50px; height: 50px; object-fit: cover;" src="{{ url_for('static', filename='profile_pics/' + topic.author.image_file) }}">
-            <h2 class="d-inline h4 text-primary align-middle ml-2">{{ topic.title }}</h2>
+    <article class="content-section">
+        <div class="d-flex align-items-center mb-3">
+            <img class="account-img shadow-sm" 
+                 src="{{ url_for('static', filename='profile_pics/' + topic.author.image_file) }}" 
+                 onerror="this.style.display='none'"
+                 alt="">
+            
+            <div>
+                <a class="mr-2 font-weight-bold" href="{{ url_for('user_posts', username=topic.author.username) }}" style="color: #007bff;">
+                    {{ topic.author.username }}
+                </a>
+                <small class="text-muted">{{ topic.date_posted.strftime('%B %d, %Y at %H:%M') }}</small>
+                
+                {% if topic.category == 'Brainwave' %}
+                    <span class="badge badge-pill badge-success ml-2">Brainwave</span>
+                {% elif topic.category == 'Help' %}
+                    <span class="badge badge-pill badge-danger ml-2">Help</span>
+                {% else %}
+                    <span class="badge badge-pill badge-secondary ml-2">General</span>
+                {% endif %}
+            </div>
+        </div>
 
-            <a href="{{ url_for('home', category=topic.category) }}">
-            <span class="badge badge-pill badge-secondary ml-2 align-middle">{{ topic.category }}</span>
-            </a>
-            <span class="badge badge-pill 
-            {% if topic.category == 'General' %}badge-secondary
-            {% elif topic.category == 'Brainwave' %}badge-success
-            {% elif topic.category == 'Help' %}badge-danger
-            {% else %}badge-info
-            {% endif %} ml-2 align-middle">
-            {{ topic.category }}
-            </span>
-            <p class="text-muted small">
-                By <a href="{{ url_for('user_posts', username=topic.author.username) }}"><strong>{{ topic.author.username }}</strong></a> 
-                on {{ topic.date_posted.strftime('%B %d, %Y at %H:%M') }}
-            </p>
-            <p class="mt-4 lead">{{ topic.content }}</p>
-            {% if topic.author == current_user %}
-                <form action="{{ url_for('delete_post', post_id=topic.id) }}" method="POST" class="mt-3 border-top pt-2">
-                    <input class="btn btn-danger btn-sm" type="submit" value="Delete Topic" onclick="return confirm('Really delete?');">
+        <h2 class="article-title mb-3">{{ topic.title }}</h2>
+        <p class="article-content" style="font-size: 1.1rem; line-height: 1.6;">{{ topic.content }}</p>
+        
+        {% if topic.author == current_user %}
+            <div class="mt-3">
+                <form action="{{ url_for('delete_post', post_id=topic.id) }}" method="POST">
+                    <input class="btn btn-danger btn-sm" type="submit" value="Delete Topic">
                 </form>
-            {% endif %}
+            </div>
+        {% endif %}
+    </article>
+
+    <h3 class="mb-4 ml-2">Replies</h3>
+    {% for reply in replies %}
+        <div class="content-section ml-md-5 shadow-sm" style="background-color: #f8f9fa;">
+            <div class="d-flex align-items-center mb-2">
+                <img class="account-img shadow-sm" style="height: 40px; width: 40px;"
+                     src="{{ url_for('static', filename='profile_pics/' + reply.author.image_file) }}" 
+                     onerror="this.style.display='none'"
+                     alt="">
+                <div>
+                    <a class="mr-2 font-weight-bold" href="{{ url_for('user_posts', username=reply.author.username) }}">
+                        {{ reply.author.username }}
+                    </a>
+                    <small class="text-muted">{{ reply.date_posted.strftime('%B %d, %Y') }}</small>
+                </div>
+            </div>
+            <p class="mb-0">{{ reply.content }}</p>
         </div>
-    </div>
-    <h5 class="mb-3 text-muted">Replies</h5>
-{% for reply in replies %}
-    <div class="media mb-3 p-3 bg-white border-left border-primary rounded shadow-xs ml-5">
-        <div class="media-body">
-            <strong>{{ reply.author.username }}</strong> 
-            <small class="text-muted ml-2">{{ reply.date_posted.strftime('%b %d, %Y') }}</small>
-            <p class="mb-0 mt-2">{{ reply.content }}</p>
+    {% endfor %}
+
+    {% if current_user.is_authenticated %}
+        <div class="content-section mt-4">
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+                <fieldset class="form-group">
+                    <legend class="border-bottom mb-4">Post a Reply</legend>
+                    <div class="form-group">
+                        {{ form.content(class="form-control form-control-lg", placeholder="Write your response...") }}
+                    </div>
+                </fieldset>
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-primary px-4") }}
+                </div>
+            </form>
         </div>
-    </div>
-{% endfor %}    
-{% if current_user.is_authenticated %}
-    <form method="POST" class="mt-5 p-3 border rounded bg-white">
-        {{ form.hidden_tag() }}
-        <div class="form-group">{{ form.content(class="form-control", placeholder="Write a reply...") }}</div>
-        {{ form.submit(class="btn btn-primary") }}
-    </form>
+    {% else %}
+        <div class="alert alert-info shadow-sm">
+            <a href="{{ url_for('login') }}">Login</a> to participate in this discussion.
+        </div>
     {% endif %}
 {% endblock %}
