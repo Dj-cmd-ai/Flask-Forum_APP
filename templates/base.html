@@ -28,14 +28,28 @@
             border: 1px solid #e1e8ed;
         }
 
-        /* Styling for the broken image fix */
+        /* Fix for broken images */
         .account-img {
             height: 50px;
             width: 50px;
-            margin-right: 15px;
             border-radius: 50%;
-            background-color: #dee2e6; /* Grey background if image fails to load */
             object-fit: cover;
+            background-color: #dee2e6; /* Grey placeholder color */
+            display: inline-block;
+            position: relative;
+        }
+
+        /* This hides the "broken" icon and alt text if the image fails */
+        .account-img:after {
+            content: "👤"; /* Shows a user icon instead of a broken image */
+            display: block;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #dee2e6;
+            text-align: center;
+            line-height: 50px;
+            font-size: 24px;
+            border-radius: 50%;
         }
 
         .article-title {
