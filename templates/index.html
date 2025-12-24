@@ -5,7 +5,10 @@
     {% for post in topics.items %}
         <article class="content-section">
             <div class="d-flex align-items-center mb-3">
-                <img class="account-img shadow-sm" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}" alt="">
+                <img class="account-img shadow-sm" 
+                    src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}" 
+                    onerror="this.style.display='none'"
+                alt="">
                 
                 <div>
                     <a class="mr-2 font-weight-bold" href="{{ url_for('user_posts', username=post.author.username) }}" style="color: #007bff;">
