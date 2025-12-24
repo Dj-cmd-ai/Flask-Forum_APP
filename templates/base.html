@@ -5,16 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <title>My Forum App</title>
+    
     <style>
-        .navbar { margin-bottom: 30px; }
-        .content-section { background: #ffffff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        /* Modern Forum Styling */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6 !important;
+            color: #444;
+        }
+
+        .navbar { 
+            margin-bottom: 30px; 
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .content-section { 
+            background: #ffffff; 
+            padding: 25px; 
+            border-radius: 12px; 
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e1e8ed;
+        }
+
+        /* Styling for the broken image fix */
+        .account-img {
+            height: 50px;
+            width: 50px;
+            margin-right: 15px;
+            border-radius: 50%;
+            background-color: #dee2e6; /* Grey background if image fails to load */
+            object-fit: cover;
+        }
+
+        .article-title {
+            color: #2c3e50;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .article-title:hover {
+            color: #007bff;
+        }
+
+        /* Search bar improvements */
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+        }
+
+        .btn-primary {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .form-control {
+            border-radius: 8px 0 0 8px;
+        }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container">
             <a class="navbar-brand font-weight-bold" href="{{ url_for('home') }}">My Forum App</a>
+            
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -27,12 +81,12 @@
                         <a class="nav-link dropdown-toggle" href="#" id="catDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Categories
                         </a>
-                        <div class="dropdown-menu shadow" aria-labelledby="catDropdown">
+                        <div class="dropdown-menu shadow-lg border-0" aria-labelledby="catDropdown">
                             <a class="dropdown-item" href="{{ url_for('home') }}">All Topics</a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item text-secondary" href="{{ url_for('home', category='General') }}">General</a>
-                            <a class="dropdown-item text-success" href="{{ url_for('home', category='Brainwave') }}">Brainwave</a>
-                            <a class="dropdown-item text-danger" href="{{ url_for('home', category='Help') }}">Help</a>
+                            <a class="dropdown-item" href="{{ url_for('home', category='General') }}">General</a>
+                            <a class="dropdown-item" href="{{ url_for('home', category='Brainwave') }}">Brainwave</a>
+                            <a class="dropdown-item" href="{{ url_for('home', category='Help') }}">Help</a>
                         </div>
                     </div>
 
@@ -55,13 +109,13 @@
     </nav>
 
     <div class="container">
-        <div class="row mb-4">
+        <div class="row search-container">
             <div class="col-md-12">
                 <form method="GET" action="{{ url_for('home') }}">
-                    <div class="input-group shadow-sm">
-                        <input type="text" name="search" class="form-control" placeholder="Search topics..." value="{{ search_term if search_term }}">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control border-0 shadow-sm" placeholder="Search for topics, ideas, or help..." value="{{ search_term if search_term }}">
                         <div class="input-group-append">
-                            <button class="btn btn-primary px-4" type="submit">Search</button>
+                            <button class="btn btn-primary px-4 shadow-sm" type="submit">Search</button>
                         </div>
                     </div>
                     {% if category_filter %}
