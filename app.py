@@ -10,7 +10,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-
+from authlib.integrations.flask_client import OAuth
 
 
 app = Flask(__name__)
@@ -38,6 +38,21 @@ login_manager.login_message_category = 'info'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
+    client_kwargs={'scope': 'openid email profile'},
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
+)
 
 # --- MODELS ---
 class User(db.Model, UserMixin):
@@ -208,6 +223,33 @@ def delete_post(post_id):
         Post.query.filter_by(parent_id=post.id).delete()
     db.session.delete(post)
     db.session.commit()
+    return redirect(url_for('home'))
+
+@app.route('/login/google')
+def google_login():
+    redirect_uri = url_for('google_authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/login/google/authorize')
+def google_authorize():
+    token = google.authorize_access_token()
+    resp = google.get('userinfo')
+    user_info = resp.json()
+    
+    # Check if user exists in Neon database
+    user = User.query.filter_by(email=user_info['email']).first()
+    if not user:
+        # Create a new user if they don't exist
+        user = User(
+            username=user_info['name'], 
+            email=user_info['email'], 
+            password_hash='oauth_managed', # They won't use a password
+            image_file=user_info['picture'] # This fixes the broken image issue!
+        )
+        db.session.add(user)
+        db.session.commit()
+    
+    login_user(user)
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
